@@ -1,0 +1,20 @@
+name: Rebase Upstream
+on:
+  schedule:
+  - cron: "0 0 * * *"  # run once a day
+  workflow_dispatch:   # run manually
+
+jobs:
+  sync:
+    name: Sync upstream with changes
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout master
+      uses: actions/checkout@master
+      with:
+        fetch-depth: 10  # greater than the number of commits you made
+    - name: Rebase to upstream and force push master
+      uses: imba-tjd/rebase-upstream-action@master
+      # with:  # all args are optional
+      #   upstream: <user>/<repo>
+      #   branch:   master
