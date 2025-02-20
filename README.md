@@ -7,6 +7,11 @@ The following was tested on Ubuntu Server 18.10
 ```
   $ sudo apt install docker.io
 ```
+### Use docker run
+```
+  $ docker run --name evepraisal -p 8080:8080 -p 8081:8081 -v ./evepraisal.toml:/evepraisal/evepraisal.toml --restart always stevencmy/evepraisal
+```
+### Use docker compose
 - Install docker-compose
 ```
   $ sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -14,9 +19,9 @@ The following was tested on Ubuntu Server 18.10
 ```
 - Download Dockerfile, docker-compose.yml, and evepraisal.toml to a directory
 ```
-  $ wget https://raw.githubusercontent.com/evepraisal/go-evepraisal/master/Dockerfile
-  $ wget https://raw.githubusercontent.com/evepraisal/go-evepraisal/master/docker-compose.yml
-  $ wget https://raw.githubusercontent.com/evepraisal/go-evepraisal/master/evepraisal.toml
+  $ wget https://raw.githubusercontent.com/steven-cmy/go-evepraisal/master/Dockerfile
+  $ wget https://raw.githubusercontent.com/steven-cmy/go-evepraisal/master/docker-compose.yml
+  $ wget https://raw.githubusercontent.com/steven-cmy/go-evepraisal/master/evepraisal.toml
 ```
 - build, and bring the container up
 ```
@@ -41,13 +46,13 @@ The following was tested on Ubuntu Server 18.10
 ```
 - Download and build evepraisal
 ```
-  ~$ mkdir -p $GOPATH/src/github.com/evepraisal/go-evepraisal
-  ~$ cd $GOPATH/src/github.com/evepraisal/go-evepraisal
-  ~/go/src/github.com/evepraisal/go-evepraisal$ git clone https://github.com/evepraisal/go-evepraisal.git .
-  ~/go/src/github.com/evepraisal/go-evepraisal$ make setup
-  ~/go/src/github.com/evepraisal/go-evepraisal$ make build
+  ~$ mkdir -p $GOPATH/src/github.com/steven-cmy/go-evepraisal
+  ~$ cd $GOPATH/src/github.com/steven-cmy/go-evepraisal
+  ~/go/src/github.com/steven-cmy/go-evepraisal$ git clone https://github.com/steven-cmy/go-evepraisal.git .
+  ~/go/src/github.com/steven-cmy/go-evepraisal$ make setup
+  ~/go/src/github.com/steven-cmy/go-evepraisal$ make build
 ```
 - Run evepraisal
 ```
-  ~/go/src/github.com/evepraisal/go-evepraisal$ ./target/evepraisal-linux-amd64
+  ~/go/src/github.com/steven-cmy/go-evepraisal$ ./target/evepraisal-linux-amd64
 ```

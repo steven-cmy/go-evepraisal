@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
-	"github.com/evepraisal/go-evepraisal"
-	boltdb "github.com/evepraisal/go-evepraisal/bolt"
+	"github.com/steven-cmy/go-evepraisal"
+	boltdb "github.com/steven-cmy/go-evepraisal/bolt"
 	"github.com/husobee/vestigo"
 )
 

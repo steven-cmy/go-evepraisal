@@ -1,4 +1,4 @@
-module github.com/evepraisal/go-evepraisal
+module github.com/steven-cmy/go-evepraisal
 
 go 1.19
 

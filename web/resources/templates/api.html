@@ -19,7 +19,7 @@ pre {
   <p>This endpoint returns the details for an appraisal in JSON format. The data includes everything needed to render the appraisal page. The most important part of the response is in the "totals" top-level key which includes the total buy price and sell price.</p>
 
   <h4>CURL Example</h4>
-  <pre><code>curl "https://evepraisal.com/a/coyaw.json"</code></pre>
+  <pre><code>curl "https://evepraisal.itworks.cc/a/coyaw.json"</code></pre>
 
   <pre><code>{
     "created": 1505592961,
@@ -86,7 +86,7 @@ pre {
   <p>This enpoint creates a new appraisal and returns the price data in JSON format.</p>
 
   <h4>CURL Example</h4>
-  <pre><code>curl -XPOST "https://evepraisal.com/appraisal/structured.json" --data '{"market_name": "jita", "items": [{"name": "Rifter"}, {"type_id": 34}]}'</code></pre>
+  <pre><code>curl -XPOST "https://evepraisal.itworks.cc/appraisal/structured.json" --data '{"market_name": "jita", "items": [{"name": "Rifter"}, {"type_id": 34}]}'</code></pre>
 
   <pre><code>{
     "appraisal": {
