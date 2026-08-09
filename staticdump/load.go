@@ -264,7 +264,7 @@ func parseVolume(s string) (float64, error) {
 }
 
 func downloadTypeVolumes(client *pester.Client) (map[int64]float64, error) {
-	req, err := http.NewRequest("GET", "https://www.fuzzwork.co.uk/dump/latest/invTypes.csv", nil)
+	req, err := http.NewRequest("GET", "https://www.fuzzwork.co.uk/dump/latest/csv/invTypes.csv", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func downloadTypeVolumes(client *pester.Client) (map[int64]float64, error) {
 }
 
 func downloadPackagedVolumes(client *pester.Client) (map[int64]float64, error) {
-	req, err := http.NewRequest("GET", "https://www.fuzzwork.co.uk/dump/latest/invVolumes.csv", nil)
+	req, err := http.NewRequest("GET", "https://www.fuzzwork.co.uk/dump/latest/csv/invVolumes.csv", nil)
 	if err != nil {
 		return nil, err
 	}
