@@ -2,6 +2,8 @@ package staticdump
 
 import (
 	"archive/zip"
+	"bufio"
+	"bytes"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -263,6 +265,18 @@ func parseVolume(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
+func newCSVReader(r io.Reader) *csv.Reader {
+	br := bufio.NewReader(r)
+	if bom, err := br.Peek(3); err == nil && bytes.Equal(bom, []byte{0xEF, 0xBB, 0xBF}) {
+		_, _ = br.Discard(3)
+	}
+
+	cr := csv.NewReader(br)
+	cr.LazyQuotes = true
+	cr.FieldsPerRecord = -1
+	return cr
+}
+
 func downloadTypeVolumes(client *pester.Client) (map[int64]float64, error) {
 	req, err := http.NewRequest("GET", "https://www.fuzzwork.co.uk/dump/latest/csv/invTypes.csv", nil)
 	if err != nil {
@@ -275,7 +289,7 @@ func downloadTypeVolumes(client *pester.Client) (map[int64]float64, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	r := csv.NewReader(resp.Body)
+	r := newCSVReader(resp.Body)
 
 	_, err = r.Read()
 	if err != nil {
@@ -318,7 +332,7 @@ func downloadPackagedVolumes(client *pester.Client) (map[int64]float64, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	r := csv.NewReader(resp.Body)
+	r := newCSVReader(resp.Body)
 	_, err = r.Read()
 	if err != nil {
 		return nil, err
