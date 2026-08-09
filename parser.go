@@ -16,8 +16,7 @@ func NewContextMultiParser(typeDB typedb.TypeDB, parserList []parsers.Parser) pa
 				if len(left) == 0 {
 					break
 				}
-				var result parsers.ParserResult
-				result, left = parser(left)
+				result, nextLeft := parser(left)
 				if result != nil && len(result.Lines()) > 0 {
 					foundRealType := false
 					for _, item := range parserResultToAppraisalItems(result) {
@@ -27,11 +26,15 @@ func NewContextMultiParser(typeDB typedb.TypeDB, parserList []parsers.Parser) pa
 						}
 					}
 
-					// We don't like this result, move ahead!
+					// If the parser produced matches but none of the parsed items correspond to real types,
+					// keep the original input so later parsers can still attempt to parse it.
 					if !foundRealType {
 						continue
 					}
 					multiParserResult.Results = append(multiParserResult.Results, result)
+					left = nextLeft
+				} else {
+					left = nextLeft
 				}
 			}
 			return multiParserResult, left

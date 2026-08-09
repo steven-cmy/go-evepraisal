@@ -1,8 +1,12 @@
 package parsers
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
+	"github.com/steven-cmy/go-evepraisal"
+	"github.com/steven-cmy/go-evepraisal/typedb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,4 +73,49 @@ func TestParsers(rt *testing.T) {
 			})
 		}
 	}
+}
+
+type testDB struct{}
+
+func (testDB) GetType(typeName string) (typedb.EveType, bool) {
+	if strings.EqualFold(typeName, "Rampancy Data Dump") {
+		return typedb.EveType{Name: "Rampancy Data Dump"}, true
+	}
+	return typedb.EveType{}, false
+}
+
+func (testDB) HasType(typeName string) bool {
+	return strings.EqualFold(typeName, "Rampancy Data Dump")
+}
+
+func (testDB) GetTypeByID(typeID int64) (typedb.EveType, bool) { return typedb.EveType{}, false }
+
+func (testDB) ListTypes(startingTypeID int64, limit int64) ([]typedb.EveType, error) { return nil, nil }
+
+func (testDB) Search(s string) []typedb.EveType { return nil }
+
+func (testDB) Delete() error { return nil }
+
+func (testDB) Close() error { return nil }
+
+func TestNewContextMultiParserPreservesUnknownTypeLines(t *testing.T) {
+	fakeParser := func(input Input) (ParserResult, Input) {
+		match, rest := regexParseLines(regexp.MustCompile(`^([\S ]+) ([\d,'\.]+)$`), input)
+		if len(match) == 0 {
+			return nil, input
+		}
+		return &Listing{lines: regexMatchedLines(match)}, rest
+	}
+
+	p := evepraisal.NewContextMultiParser(testDB{}, []Parser{fakeParser, ParseListing})
+	result, rest := p(StringToInput("Rampancy Data Dump 4112"))
+
+	assert.Equal(t, Input{}, rest)
+	mp, ok := result.(*MultiParserResult)
+	assert.True(t, ok)
+	assert.Len(t, mp.Results, 1)
+	listing, ok := mp.Results[0].(*Listing)
+	assert.True(t, ok)
+	assert.Equal(t, "Rampancy Data Dump", listing.Items[0].Name)
+	assert.Equal(t, int64(4112), listing.Items[0].Quantity)
 }
