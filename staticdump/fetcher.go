@@ -5,13 +5,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/sethgrid/pester"
 	"github.com/steven-cmy/go-evepraisal/bolt"
 	"github.com/steven-cmy/go-evepraisal/typedb"
-	"github.com/sethgrid/pester"
 )
 
 // StaticFetcher continually fetches a new static dump and updates the type database with the current types
@@ -65,13 +64,12 @@ func NewStaticFetcher(client *pester.Client, dbPath string, callback func(typeDB
 
 // RunOnce will fetch, parse and call the callback with a fresh type database
 func (f *StaticFetcher) RunOnce() error {
-	staticDumpURL, err := FindLastStaticDumpUrl(f.client)
+	staticDumpURL, staticDumpKey, err := findLastStaticDump(f.client, latestStaticDumpManifestURL)
 	if err != nil {
 		// TODO: fallback to previously downloaded static data
 		return fmt.Errorf("error fetching static data: %w", err)
 	}
 
-	staticDumpKey := strings.TrimSuffix(filepath.Base(staticDumpURL), filepath.Ext(staticDumpURL))
 	log.Println("Latest Static Dump URL", staticDumpURL, staticDumpKey)
 
 	typedbPath := filepath.Join(f.dbPath, "types-"+staticDumpKey)

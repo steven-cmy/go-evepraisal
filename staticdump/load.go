@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
-	// "errors"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -14,56 +14,76 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/steven-cmy/go-evepraisal/typedb"
 	"github.com/sethgrid/pester"
+	"github.com/steven-cmy/go-evepraisal/typedb"
 )
 
-var userAgent = "go-evepraisal"
+var userAgent = "go-evepraisal (admin@itworks.cc; +https://github.com/steven-cmy/go-evepraisal)"
+
+const latestStaticDumpManifestURL = "https://developers.eveonline.com/static-data/tranquility/latest.jsonl"
 
 func FindLastStaticDumpUrl(client *pester.Client) (string, error) {
-	return "https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip", nil
+	staticDumpURL, _, err := findLastStaticDump(client, latestStaticDumpManifestURL)
+	return staticDumpURL, err
 }
 
-// FindLastStaticDumpChecksum is kept for compatibility with older callers.
-// The upstream checksum endpoint is no longer published, so we avoid network
-// validation and just use a stable cache key.
+// FindLastStaticDumpChecksum returns the latest SDE build number as its cache key.
 func FindLastStaticDumpChecksum(client *pester.Client) (string, error) {
-	return "latest", nil
-	// req, err := http.NewRequest("GET", "https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/checksum", nil)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// req.Header.Add("User-Agent", userAgent)
+	_, checksum, err := findLastStaticDump(client, latestStaticDumpManifestURL)
+	return checksum, err
+}
 
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// defer resp.Body.Close()
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return "", err
-	// }
+func findLastStaticDump(client *pester.Client, manifestURL string) (string, string, error) {
+	req, err := http.NewRequest("GET", manifestURL, nil)
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Add("User-Agent", userAgent)
 
-	// log.Println("Checksum Body:", string(body), resp.StatusCode)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
 
-	// switch resp.StatusCode {
-	// case 200, 304:
-	// 	lines := strings.Split(string(body), "\n")
-	// 	for _, line := range lines {
-	// 		if strings.Contains(line, "sde.zip") {
-	// 			parts := strings.Fields(line)
-	// 			if len(parts) > 0 {
-	// 				return parts[0], nil
-	// 			}
-	// 		}
-	// 	}
-	// 	return "", errors.New("Checksum for sde.zip not found")
-	// case 404:
-	// 	return "", errors.New("Could not find latest static dump checksum (404)")
-	// default:
-	// 	return "", fmt.Errorf("Unexpected response when trying to find last static dump checksum: %s", resp.Status)
-	// }
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return "", "", fmt.Errorf("unexpected response when fetching latest static dump: %s", resp.Status)
+	}
+
+	type manifestEntry struct {
+		Key         string `json:"_key"`
+		BuildNumber int64  `json:"buildNumber"`
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
+
+		var entry manifestEntry
+		if err := json.Unmarshal(line, &entry); err != nil {
+			return "", "", fmt.Errorf("decode latest static dump manifest: %w", err)
+		}
+		if entry.Key != "sde" {
+			continue
+		}
+		if entry.BuildNumber <= 0 {
+			return "", "", fmt.Errorf("invalid SDE build number %d", entry.BuildNumber)
+		}
+
+		checksum := strconv.FormatInt(entry.BuildNumber, 10)
+		staticDumpURL := fmt.Sprintf(
+			"https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-%s-yaml.zip",
+			checksum,
+		)
+		return staticDumpURL, checksum, nil
+	}
+	if err := scanner.Err(); err != nil {
+		return "", "", fmt.Errorf("read latest static dump manifest: %w", err)
+	}
+	return "", "", fmt.Errorf("SDE entry not found in latest static dump manifest")
 }
 
 func downloadTypes(client *pester.Client, staticDumpURL string, staticDataPath string) error {
